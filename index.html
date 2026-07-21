@@ -237,20 +237,6 @@
 
     <div class="panel" id="panel-complaints">
       <div class="panel-header"><h2>📋 Complaint Management</h2></div>
-      <div class="form-card">
-        <h3>Register Complaint</h3>
-        <div class="form-row">
-          <div class="form-group"><label>Student *</label><select id="c-student" onchange="el('c-student-name').value=this.options[this.selectedIndex]?.dataset?.name||''"></select></div>
-          <div class="form-group"><label>Title *</label><input type="text" id="c-title" placeholder="Issue summary"/></div>
-          <div class="form-group"><label>Category</label><select id="c-category"><option value="ELECTRIC">Electrical</option><option value="PLUMBING">Plumbing</option><option value="CLEANING">Cleaning</option><option value="OTHER">Other</option></select></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Priority</label><select id="c-priority"><option value="LOW">Low</option><option value="MEDIUM" selected>Medium</option><option value="HIGH">High</option></select></div>
-          <div class="form-group"><label>Description</label><textarea id="c-desc" rows="2" placeholder="Detailed description..."></textarea></div>
-        </div>
-        <button class="btn btn-primary" onclick="saveComplaint()">Submit Complaint</button>
-        <input type="hidden" id="c-student-name"/>
-      </div>
       <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Title</th><th>Description</th><th>Category</th><th>Status</th><th>Priority</th><th>Action</th></tr></thead><tbody id="complaintTbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
 
@@ -337,7 +323,7 @@
   </div>
 </section>
 
-<script src="js/api.js?v=9"></script>
+<script src="js/api.js?v=10"></script>
 <script>
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 </script>

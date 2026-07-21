@@ -230,7 +230,7 @@ async function populateStudentDropdowns() {
     cachedStudents = list || [];
     const opts = '<option value="">-- Select Student --</option>' +
       cachedStudents.map(s => `<option value="${s.id}" data-name="${s.name}">${s.id} — ${s.name} (${s.email})</option>`).join('');
-    ['f-student', 'c-student', 'a-student', 'v-student'].forEach(id => {
+    ['f-student', 'a-student', 'v-student'].forEach(id => {
       const sel = el(id);
       if (sel) sel.innerHTML = opts;
     });
@@ -411,16 +411,6 @@ async function loadComplaints() {
       </td>
     </tr>`).join('');
   } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load complaints', 'error'); }
-}
-async function saveComplaint() {
-  const sel = el('c-student');
-  const studentId = parseInt(sel.value);
-  const studentName = sel.options[sel.selectedIndex]?.dataset?.name || '';
-  const title = el('c-title').value.trim();
-  const data = { studentId, studentName, title, description: el('c-desc').value.trim(), category: el('c-category').value, priority: el('c-priority').value };
-  if (!studentId || !title) { showToast('Student & Title required', 'error'); return; }
-  try { await api('/complaints', { method: 'POST', body: JSON.stringify(data) }); showToast('Complaint registered'); el('c-title').value = ''; el('c-desc').value = ''; sel.value = ''; loadComplaints(); loadDashboard(); }
-  catch (e) { showToast(e.error || 'Failed', 'error'); }
 }
 async function updateComplaintStatus(id, status, resolution) {
   try { await api('/complaints/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status, resolution }) }); showToast('Status updated'); loadComplaints(); }
