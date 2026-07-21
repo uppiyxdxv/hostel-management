@@ -9,8 +9,107 @@
   <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
+
+<!-- ════════════════════ PUBLIC SECTIONS ════════════════════ -->
+<div id="public-sections">
+
+  <!-- ── HOME ── -->
+  <section id="section-home" class="section active">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <div class="hero-badge">Welcome to</div>
+        <h1>Smart Hostel <span class="highlight">Management</span></h1>
+        <p class="hero-sub">A complete solution for managing hostel operations — student registration, room allocation, fee tracking, visitor logs, complaints, and daily attendance.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" onclick="showSection('section-login')">Admin Login</button>
+          <button class="btn btn-outline btn-lg" onclick="showSection('section-register')">Student Register</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature-card"><div class="ico">👥</div><h3>Student Management</h3><p>Register, update, and manage student profiles with ease.</p></div>
+      <div class="feature-card"><div class="ico">🛏</div><h3>Room Allocation</h3><p>Assign rooms, track occupancy, manage dormitory capacity.</p></div>
+      <div class="feature-card"><div class="ico">💰</div><h3>Fee Tracking</h3><p>Record payments, track dues, generate fee reports.</p></div>
+      <div class="feature-card"><div class="ico">🚪</div><h3>Visitor Log</h3><p>Digital check-in/check-out for hostel visitors.</p></div>
+      <div class="feature-card"><div class="ico">📋</div><h3>Complaints</h3><p>Students can submit issues; staff can track resolution.</p></div>
+      <div class="feature-card"><div class="ico">✅</div><h3>Attendance</h3><p>Mark daily attendance, view reports by date or student.</p></div>
+    </div>
+
+    <div class="about-section">
+      <div class="about-content">
+        <h2>About Smart Hostel</h2>
+        <p>Our system streamlines hostel administration with an intuitive dashboard, real-time data, and secure access. Built for wardens, administrators, and hostel staff to manage day-to-day operations efficiently.</p>
+        <div class="stats-mini">
+          <div><strong>6</strong> Modules</div>
+          <div><strong>24/7</strong> Access</div>
+          <div><strong>100%</strong> Digital</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <p>© 2025 Smart Hostel Management System. All rights reserved.</p>
+    </footer>
+  </section>
+
+  <!-- ── LOGIN ── -->
+  <section id="section-login" class="section">
+    <div class="auth-page">
+      <div class="auth-card">
+        <button class="auth-back" onclick="showSection('section-home')">← Back</button>
+        <div class="auth-header">
+          <div class="auth-logo">🏨</div>
+          <h2>Admin Login</h2>
+          <p>Sign in to manage the hostel</p>
+        </div>
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="admin" required/></div>
+          <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••" required/></div>
+          <div id="login-error" class="form-error"></div>
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem;" id="login-btn">Sign In</button>
+        </form>
+        <p class="auth-alt">New student? <a href="#" onclick="showSection('section-register')">Register here</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── REGISTER ── -->
+  <section id="section-register" class="section">
+    <div class="auth-page">
+      <div class="auth-card auth-card-wide">
+        <button class="auth-back" onclick="showSection('section-home')">← Back</button>
+        <div class="auth-header">
+          <div class="auth-logo">👥</div>
+          <h2>Student Registration</h2>
+          <p>Create your student account</p>
+        </div>
+        <form onsubmit="handleRegister(event)">
+          <div class="form-row">
+            <div class="form-group"><label>Full Name *</label><input type="text" id="reg-name" placeholder="John Doe" required/></div>
+            <div class="form-group"><label>Email *</label><input type="email" id="reg-email" placeholder="john@example.com" required/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Phone *</label><input type="text" id="reg-phone" placeholder="+91 9876543210" required/></div>
+            <div class="form-group"><label>Gender</label><select id="reg-gender"><option value="">Select</option><option>MALE</option><option>FEMALE</option><option>OTHER</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Date of Birth</label><input type="date" id="reg-dob"/></div>
+            <div class="form-group"><label>Address</label><input type="text" id="reg-address" placeholder="Your address"/></div>
+          </div>
+          <div id="register-error" class="form-error"></div>
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem;" id="register-btn">Register</button>
+        </form>
+        <p class="auth-alt">Already have access? <a href="#" onclick="showSection('section-login')">Admin login</a></p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ════════════════════ DASHBOARD (protected) ════════════════════ -->
+<div id="section-dashboard" class="section" style="display:none">
 <div class="hostel-layout">
-  <!-- ── SIDEBAR ── -->
   <aside class="sidebar">
     <div class="sidebar-logo"><div class="ico">🏨</div> Smart Hostel</div>
     <nav class="sidebar-nav">
@@ -22,18 +121,20 @@
       <a href="#" onclick="showPanel('panel-complaints');loadComplaints()">📋 Complaints</a>
       <a href="#" onclick="showPanel('panel-attendance');loadAttendance()">✅ Attendance</a>
     </nav>
-    <div class="sidebar-foot">© 2025 Smart Hostel System</div>
+    <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:.5rem;">
+      <span id="sidebar-user" style="font-size:.82rem;color:var(--text);"></span>
+      <a href="#" onclick="handleLogout()" style="color:var(--danger);text-decoration:none;font-size:.82rem;">🚪 Logout</a>
+      <span style="font-size:.72rem;color:var(--muted);">© 2025 Smart Hostel</span>
+    </div>
   </aside>
 
-  <!-- ── MAIN ── -->
   <main class="main">
     <div class="main-header">
       <div><h1 id="pageTitle">🏨 Dashboard</h1><div class="date" id="todayDate"></div></div>
     </div>
 
-    <!-- ── PANEL: HOME ── -->
     <div class="panel active" id="panel-home">
-      <div class="stats-row">
+      <div class="stats-row" id="stats-row">
         <div class="stat-card"><div class="icon">👥</div><div class="value" id="stat-total-students">0</div><div class="label">Total Students</div></div>
         <div class="stat-card"><div class="icon">🛏</div><div class="value" id="stat-total-rooms">0</div><div class="label">Total Rooms</div></div>
         <div class="stat-card"><div class="icon">💰</div><div class="value" id="stat-unpaid-fees">0</div><div class="label">Unpaid Fees</div></div>
@@ -51,7 +152,6 @@
       </div>
     </div>
 
-    <!-- ── PANEL: STUDENTS ── -->
     <div class="panel" id="panel-students">
       <div class="panel-header"><h2>👥 Students <span id="studentCount" style="font-size:.85rem;color:var(--muted);font-weight:400;"></span></h2></div>
       <div class="form-card">
@@ -71,7 +171,6 @@
       <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Room</th><th>Gender</th><th>Status</th><th>Action</th></tr></thead><tbody id="studentTbody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
 
-    <!-- ── PANEL: ROOMS ── -->
     <div class="panel" id="panel-rooms">
       <div class="panel-header"><h2>🛏 Rooms <span id="roomCount" style="font-size:.85rem;color:var(--muted);font-weight:400;"></span> <span style="font-size:.82rem;color:var(--muted);">| Available: <span id="availableCount" style="color:var(--success);font-weight:700;">0</span></span></h2></div>
       <div class="form-card">
@@ -90,7 +189,6 @@
       <div class="tbl-wrap"><table><thead><tr><th>Room</th><th>Floor</th><th>Type</th><th>Occupancy</th><th>Rent</th><th>Status</th></tr></thead><tbody id="roomTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
 
-    <!-- ── PANEL: FEES ── -->
     <div class="panel" id="panel-fees">
       <div class="panel-header"><h2>💰 Fee Management</h2><div style="display:flex;gap:.5rem;font-size:.82rem;"><span>Total: <strong id="totalFees">₹0</strong></span><span>Paid: <strong id="paidFees" style="color:var(--success);">0</strong></span><span>Unpaid: <strong id="unpaidFees" style="color:var(--danger);">0</strong></span></div></div>
       <div class="form-card">
@@ -110,7 +208,6 @@
       <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Amount</th><th>Type</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead><tbody id="feeTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
 
-    <!-- ── PANEL: VISITORS ── -->
     <div class="panel" id="panel-visitors">
       <div class="panel-header"><h2>🚪 Visitor Records</h2></div>
       <div class="form-card">
@@ -126,7 +223,6 @@
       <div class="tbl-wrap"><table><thead><tr><th>Visitor</th><th>Student</th><th>Phone</th><th>Purpose</th><th>In Time</th><th>Status</th></tr></thead><tbody id="visitorTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
 
-    <!-- ── PANEL: COMPLAINTS ── -->
     <div class="panel" id="panel-complaints">
       <div class="panel-header"><h2>📋 Complaint Management</h2></div>
       <div class="form-card">
@@ -146,7 +242,6 @@
       <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Title</th><th>Description</th><th>Category</th><th>Status</th><th>Priority</th><th>Action</th></tr></thead><tbody id="complaintTbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
 
-    <!-- ── PANEL: ATTENDANCE ── -->
     <div class="panel" id="panel-attendance">
       <div class="panel-header"><h2>✅ Daily Attendance</h2><div style="display:flex;gap:.5rem;"><button class="btn btn-success" onclick="markMultiplePresent()">Mark All Present</button></div></div>
       <div class="form-card">
@@ -166,6 +261,26 @@
     </div>
   </main>
 </div>
+</div>
+
+<!-- ════════════════════ ROOM ALLOTMENT MODAL ════════════════════ -->
+<div id="allot-modal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Allot Room</h3>
+      <button class="modal-close" onclick="closeAllotModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:.5rem;">Student: <strong id="allot-student-name"></strong></p>
+      <div class="form-group"><label>Select Room</label><select id="allot-room-select"></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="confirmAllot()">Allot Room</button>
+      <button class="btn btn-outline" onclick="closeAllotModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/api.js"></script>
 <script>
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
