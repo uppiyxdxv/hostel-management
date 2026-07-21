@@ -1,4 +1,5 @@
 package com.hostel.auth;
+import com.hostel.auth.AuthService.TokenInfo;
 import com.hostel.model.Student;
 import com.hostel.repository.StudentRepository;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +19,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String token = authService.login(body.get("username"), body.get("password"));
-        if (token == null) return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
-        return ResponseEntity.ok(Map.of("token", token, "username", body.get("username")));
+        TokenInfo info = authService.login(body.get("username"), body.get("password"));
+        if (info == null) return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
+        return ResponseEntity.ok(Map.of("token", info.token, "username", info.username, "role", info.role, "studentId", info.studentId));
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Student s) {
+        if (s.getPassword() == null || s.getPassword().isBlank())
+            return ResponseEntity.badRequest().body(Map.of("error", "Password is required"));
         if (studentRepo.findByEmail(s.getEmail()).isPresent())
             return ResponseEntity.badRequest().body(Map.of("error", "Email already registered"));
         s.setRegistrationDate(java.time.LocalDate.now());
@@ -37,5 +40,19 @@ public class AuthController {
         if (auth != null && auth.startsWith("Bearer "))
             authService.invalidateToken(auth.substring(7));
         return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(@RequestHeader("Authorization") String auth) {
+        if (auth == null || !auth.startsWith("Bearer "))
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        TokenInfo info = authService.getTokenInfo(auth.substring(7));
+        if (info == null) return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+        if ("student".equals(info.role) && info.studentId != null) {
+            return studentRepo.findById(info.studentId)
+                .map(s -> ResponseEntity.ok((Object) s))
+                .orElse(ResponseEntity.status(404).body(Map.of("error", "Student not found")));
+        }
+        return ResponseEntity.ok(Map.of("username", info.username, "role", info.role));
     }
 }

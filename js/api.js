@@ -1,12 +1,13 @@
 const API = 'https://hostel-management-api-0nr9.onrender.com/api';
 let currentStudentId = null;
+let loginMode = 'admin';
 
 async function api(path, opts = {}) {
   const token = localStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
   const r = await fetch(API + path, { headers: { ...headers, ...opts.headers }, ...opts });
-  if (r.status === 401) { localStorage.removeItem('token'); localStorage.removeItem('username'); showSection('section-login'); throw new Error('Session expired'); }
+  if (r.status === 401) { localStorage.clear(); showSection('section-home'); throw new Error('Session expired'); }
   if (!r.ok) { const e = await r.json().catch(() => ({ error: r.statusText })); throw e; }
   return r.json().catch(() => null);
 }
@@ -20,12 +21,31 @@ function showToast(msg, type = 'success') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── SECTION NAVIGATION ──
 function showSection(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   const section = document.getElementById(id);
   if (section) section.classList.add('active');
 }
+
+// ── LOGIN MODE SWITCHING ──
+function showLogin(mode) {
+  loginMode = mode;
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.toggle('active', t.dataset.role === mode));
+  if (mode === 'admin') {
+    el('login-logo').textContent = '🏨';
+    el('login-title').textContent = 'Admin Login';
+    el('login-sub').textContent = 'Sign in to manage the hostel';
+    el('login-field-label').textContent = 'Email';
+  } else {
+    el('login-logo').textContent = '👥';
+    el('login-title').textContent = 'Student Login';
+    el('login-sub').textContent = 'Sign in to view your dashboard';
+    el('login-field-label').textContent = 'Email';
+  }
+  showSection('section-login');
+}
+
+function switchLoginMode(mode) { showLogin(mode); }
 
 // ── AUTH ──
 async function handleLogin(e) {
@@ -42,8 +62,11 @@ async function handleLogin(e) {
     const data = await res.json();
     localStorage.setItem('token', data.token);
     localStorage.setItem('username', data.username);
+    localStorage.setItem('role', data.role);
+    if (data.studentId) localStorage.setItem('studentId', data.studentId);
     showToast('Welcome, ' + data.username);
-    enterDashboard();
+    if (data.role === 'student') enterStudentDashboard();
+    else enterAdminDashboard();
   } catch (e) {
     el('login-error').textContent = e.message || 'Invalid credentials';
     showToast(e.message, 'error');
@@ -60,16 +83,17 @@ async function handleRegister(e) {
       name: el('reg-name').value.trim(),
       email: el('reg-email').value.trim(),
       phone: el('reg-phone').value.trim(),
+      password: el('reg-password').value,
       gender: el('reg-gender').value,
       dob: el('reg-dob').value,
       address: el('reg-address').value.trim()
     };
-    if (!data.name || !data.email || !data.phone) throw new Error('Name, Email & Phone required');
+    if (!data.name || !data.email || !data.phone || !data.password) throw new Error('Name, Email, Phone & Password required');
     await api('/auth/register', { method: 'POST', body: JSON.stringify(data) });
-    showToast('Registration successful! Admin can log in to manage.');
-    el('reg-name').value = ''; el('reg-email').value = ''; el('reg-phone').value = '';
+    showToast('Registration successful! You can now login.');
+    el('reg-name').value = ''; el('reg-email').value = ''; el('reg-phone').value = ''; el('reg-password').value = '';
     el('reg-gender').value = ''; el('reg-dob').value = ''; el('reg-address').value = '';
-    showSection('section-login');
+    showLogin('student');
   } catch (e) {
     el('register-error').textContent = e.message || e.error || 'Registration failed';
     showToast(e.message || 'Failed', 'error');
@@ -78,20 +102,25 @@ async function handleRegister(e) {
 }
 
 function handleLogout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('username');
+  localStorage.clear();
   showToast('Logged out');
   showSection('section-home');
   if (statsInterval) clearInterval(statsInterval);
 }
 
-function enterDashboard() {
+function enterAdminDashboard() {
   showSection('section-dashboard');
   el('sidebar-user').textContent = '👤 ' + (localStorage.getItem('username') || 'Admin');
-  initDashboard();
+  initAdminDashboard();
 }
 
-// ── DASHBOARD ──
+function enterStudentDashboard() {
+  showSection('section-student-dashboard');
+  el('sd-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  loadStudentDashboard();
+}
+
+// ── ADMIN DASHBOARD ──
 let statsInterval;
 
 function showPanel(id) {
@@ -120,7 +149,7 @@ async function loadDashboard() {
   } catch (e) { console.error('Dashboard load error', e); }
 }
 
-function initDashboard() {
+function initAdminDashboard() {
   loadDashboard();
   loadStudents();
   loadRooms();
@@ -132,7 +161,7 @@ function initDashboard() {
   statsInterval = setInterval(() => { loadDashboard(); }, 30000);
 }
 
-// ── STUDENTS ──
+// ── STUDENTS (admin) ──
 async function loadStudents() {
   try {
     el('studentCount').textContent = 'Loading...';
@@ -228,7 +257,7 @@ async function saveRoom() {
   } catch (e) { showToast(e.error || 'Failed to save', 'error'); }
 }
 
-// ── FEES ──
+// ── FEES (admin) ──
 async function loadFees() {
   try {
     const list = await api('/fees');
@@ -245,7 +274,6 @@ async function loadFees() {
     el('unpaidFees').textContent = list.filter(f => f.status === 'UNPAID').length;
   } catch (e) { showToast('Failed to load fees', 'error'); }
 }
-
 async function saveFee() {
   const data = { studentId: parseInt(el('f-student').value), studentName: el('f-student-name').value.trim(), amount: parseFloat(el('f-amount').value), dueDate: el('f-due').value, type: el('f-type').value, remark: el('f-remark').value.trim() };
   if (!data.studentId || !data.amount || !data.dueDate) { showToast('Student, Amount & Due Date required', 'error'); return; }
@@ -278,7 +306,7 @@ async function saveVisitor() {
   catch (e) { showToast(e.error || 'Failed', 'error'); }
 }
 
-// ── COMPLAINTS ──
+// ── COMPLAINTS (admin) ──
 async function loadComplaints() {
   try {
     const list = await api('/complaints');
@@ -311,7 +339,7 @@ async function resolveComplaint(id) {
   await updateComplaintStatus(id, 'RESOLVED', resolution);
 }
 
-// ── ATTENDANCE ──
+// ── ATTENDANCE (admin) ──
 async function loadAttendance() {
   try {
     const today = new Date().toISOString().slice(0, 10);
@@ -348,7 +376,92 @@ async function markMultiplePresent() {
   } catch (e) { showToast('Failed', 'error'); }
 }
 
+// ═══════════════════════ STUDENT DASHBOARD ═══════════════════════
+async function loadStudentDashboard() {
+  const sid = localStorage.getItem('studentId');
+  if (!sid) { showToast('Student ID not found', 'error'); handleLogout(); return; }
+  try {
+    const student = await api('/students/' + sid);
+    if (!student) throw new Error('Student not found');
+    el('sd-name').textContent = student.name;
+    el('sd-profile-content').innerHTML = `
+      <div class="sd-info"><span>Name</span><strong>${student.name}</strong></div>
+      <div class="sd-info"><span>Email</span><strong>${student.email}</strong></div>
+      <div class="sd-info"><span>Phone</span><strong>${student.phone}</strong></div>
+      <div class="sd-info"><span>Gender</span><strong>${student.gender || '-'}</strong></div>
+      <div class="sd-info"><span>DOB</span><strong>${student.dob || '-'}</strong></div>
+      <div class="sd-info"><span>Status</span><strong>${student.status}</strong></div>
+    `;
+    if (student.roomNumber) {
+      const rooms = await api('/rooms');
+      const room = rooms.find(r => r.roomNumber === student.roomNumber);
+      el('sd-room-content').innerHTML = room ? `
+        <div class="sd-info"><span>Room</span><strong>${room.roomNumber}</strong></div>
+        <div class="sd-info"><span>Floor</span><strong>${room.floor}</strong></div>
+        <div class="sd-info"><span>Type</span><strong>${room.type}</strong></div>
+        <div class="sd-info"><span>Rent</span><strong>₹${room.rent}</strong></div>
+        <div class="sd-info"><span>Occupancy</span><strong>${room.occupied}/${room.capacity}</strong></div>
+      ` : `<p style="color:var(--muted)">Room: ${student.roomNumber}</p>`;
+    } else {
+      el('sd-room-content').innerHTML = '<p style="color:var(--muted)">No room allotted yet</p>';
+    }
+    await loadStudentFees(sid);
+    await loadStudentComplaints(sid);
+    await loadStudentAttendance(sid);
+  } catch (e) { showToast('Failed to load dashboard', 'error'); }
+}
+
+async function loadStudentFees(sid) {
+  try {
+    const fees = await api('/fees/student/' + sid);
+    const c = el('sd-fees-content');
+    if (!fees || !fees.length) { c.innerHTML = '<p style="color:var(--muted)">No fee records</p>'; return; }
+    c.innerHTML = '<table style="font-size:.8rem"><thead><tr><th>Amount</th><th>Due</th><th>Status</th><th>Paid</th></tr></thead><tbody>' +
+      fees.map(f => `<tr><td>₹${f.amount}</td><td>${f.dueDate}</td><td><span class="status-badge ${f.status.toLowerCase()}">${f.status}</span></td><td>${f.paidDate || '-'}</td></tr>`).join('') +
+      '</tbody></table>';
+  } catch (e) { el('sd-fees-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
+}
+
+async function loadStudentComplaints(sid) {
+  try {
+    const list = await api('/complaints/student/' + sid);
+    const c = el('sd-complaints-content');
+    if (!list || !list.length) { c.innerHTML = '<p style="color:var(--muted)">No complaints submitted</p>'; return; }
+    c.innerHTML = list.map(cp => `<div style="padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.82rem;">
+      <strong>${cp.title}</strong> <span class="status-badge ${cp.status === 'RESOLVED' ? 'resolved' : cp.status === 'IN_PROGRESS' ? 'in-progress' : 'pending'}">${cp.status.replace('_',' ')}</span>
+      <div style="color:var(--muted);font-size:.75rem;">${cp.description || ''}${cp.resolution ? '<br/>Resolution: '+cp.resolution : ''}</div>
+    </div>`).join('');
+  } catch (e) { el('sd-complaints-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
+}
+
+async function sdSubmitComplaint() {
+  const sid = localStorage.getItem('studentId');
+  const title = el('sd-comp-title').value.trim();
+  const desc = el('sd-comp-desc').value.trim();
+  if (!title) { showToast('Title required', 'error'); return; }
+  try {
+    await api('/complaints', { method: 'POST', body: JSON.stringify({ studentId: parseInt(sid), title, description: desc, category: 'OTHER', priority: 'MEDIUM' }) });
+    showToast('Complaint submitted');
+    el('sd-comp-title').value = ''; el('sd-comp-desc').value = '';
+    await loadStudentComplaints(sid);
+  } catch (e) { showToast(e.error || 'Failed', 'error'); }
+}
+
+async function loadStudentAttendance(sid) {
+  try {
+    const list = await api('/attendance/student/' + sid);
+    const c = el('sd-attendance-content');
+    if (!list || !list.length) { c.innerHTML = '<p style="color:var(--muted)">No attendance records</p>'; return; }
+    c.innerHTML = '<table style="font-size:.8rem"><thead><tr><th>Date</th><th>Status</th><th>In</th><th>Out</th></tr></thead><tbody>' +
+      list.slice(-10).reverse().map(a => `<tr><td>${a.date}</td><td><span class="status-badge ${a.status.toLowerCase()}">${a.status}</span></td><td>${a.inTime || '-'}</td><td>${a.outTime || '-'}</td></tr>`).join('') +
+      '</tbody></table>';
+  } catch (e) { el('sd-attendance-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
+}
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('token')) enterDashboard();
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+  if (token && role === 'student') enterStudentDashboard();
+  else if (token) enterAdminDashboard();
 });

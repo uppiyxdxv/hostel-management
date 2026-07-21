@@ -22,7 +22,8 @@
         <h1>Smart Hostel <span class="highlight">Management</span></h1>
         <p class="hero-sub">A complete solution for managing hostel operations — student registration, room allocation, fee tracking, visitor logs, complaints, and daily attendance.</p>
         <div class="hero-actions">
-          <button class="btn btn-primary btn-lg" onclick="showSection('section-login')">Admin Login</button>
+          <button class="btn btn-primary btn-lg" onclick="showLogin('admin')">Admin Login</button>
+          <button class="btn btn-outline btn-lg" onclick="showLogin('student')">Student Login</button>
           <button class="btn btn-outline btn-lg" onclick="showSection('section-register')">Student Register</button>
         </div>
       </div>
@@ -60,12 +61,16 @@
       <div class="auth-card">
         <button class="auth-back" onclick="showSection('section-home')">← Back</button>
         <div class="auth-header">
-          <div class="auth-logo">🏨</div>
-          <h2>Admin Login</h2>
-          <p>Sign in to manage the hostel</p>
+          <div class="auth-logo" id="login-logo">🏨</div>
+          <h2 id="login-title">Admin Login</h2>
+          <p id="login-sub">Sign in to manage the hostel</p>
+        </div>
+        <div class="login-tabs">
+          <button class="login-tab active" data-role="admin" onclick="switchLoginMode('admin')">👤 Admin</button>
+          <button class="login-tab" data-role="student" onclick="switchLoginMode('student')">👥 Student</button>
         </div>
         <form onsubmit="handleLogin(event)">
-          <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="admin@email.com" required/></div>
+          <div class="form-group"><label id="login-field-label">Email</label><input type="text" id="login-username" placeholder="email@example.com" required/></div>
           <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••" required/></div>
           <div id="login-error" class="form-error"></div>
           <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem;" id="login-btn">Sign In</button>
@@ -92,16 +97,19 @@
           </div>
           <div class="form-row">
             <div class="form-group"><label>Phone *</label><input type="text" id="reg-phone" placeholder="+91 9876543210" required/></div>
-            <div class="form-group"><label>Gender</label><select id="reg-gender"><option value="">Select</option><option>MALE</option><option>FEMALE</option><option>OTHER</option></select></div>
+            <div class="form-group"><label>Password *</label><input type="password" id="reg-password" placeholder="Create a password" required/></div>
           </div>
           <div class="form-row">
+            <div class="form-group"><label>Gender</label><select id="reg-gender"><option value="">Select</option><option>MALE</option><option>FEMALE</option><option>OTHER</option></select></div>
             <div class="form-group"><label>Date of Birth</label><input type="date" id="reg-dob"/></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>Address</label><input type="text" id="reg-address" placeholder="Your address"/></div>
           </div>
           <div id="register-error" class="form-error"></div>
           <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem;" id="register-btn">Register</button>
         </form>
-        <p class="auth-alt">Already have access? <a href="#" onclick="showSection('section-login')">Admin login</a></p>
+        <p class="auth-alt">Already have access? <a href="#" onclick="showLogin('student')">Student login</a></p>
       </div>
     </div>
   </section>
@@ -280,6 +288,46 @@
     </div>
   </div>
 </div>
+
+<!-- ════════════════════ STUDENT DASHBOARD ════════════════════ -->
+<section id="section-student-dashboard" class="section" style="display:none">
+  <div class="sd-header">
+    <div class="sd-header-left">
+      <h1>👤 My Dashboard</h1>
+      <span class="date" id="sd-date"></span>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="handleLogout()">🚪 Logout</button>
+  </div>
+  <div class="sd-welcome" id="sd-welcome">Welcome, <strong id="sd-name"></strong>!</div>
+
+  <div class="sd-grid">
+    <div class="sd-card sd-card-profile">
+      <h3>👤 My Profile</h3>
+      <div id="sd-profile-content">Loading...</div>
+    </div>
+    <div class="sd-card sd-card-room">
+      <h3>🛏 My Room</h3>
+      <div id="sd-room-content">Loading...</div>
+    </div>
+    <div class="sd-card sd-card-fees">
+      <h3>💰 My Fees</h3>
+      <div id="sd-fees-content">Loading...</div>
+    </div>
+    <div class="sd-card sd-card-complaints">
+      <h3>📋 My Complaints</h3>
+      <form onsubmit="event.preventDefault();sdSubmitComplaint()" style="margin-bottom:.75rem;display:flex;gap:.4rem;flex-wrap:wrap;">
+        <input type="text" id="sd-comp-title" placeholder="Title" style="flex:1;min-width:120px;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-size:.8rem;font-family:var(--font);outline:none;" required/>
+        <input type="text" id="sd-comp-desc" placeholder="Description" style="flex:2;min-width:160px;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-size:.8rem;font-family:var(--font);outline:none;"/>
+        <button class="btn btn-sm btn-primary">Submit</button>
+      </form>
+      <div id="sd-complaints-content">Loading...</div>
+    </div>
+    <div class="sd-card sd-card-attendance">
+      <h3>✅ My Attendance</h3>
+      <div id="sd-attendance-content">Loading...</div>
+    </div>
+  </div>
+</section>
 
 <script src="js/api.js"></script>
 <script>
