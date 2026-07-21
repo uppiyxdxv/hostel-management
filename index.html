@@ -225,13 +225,14 @@
         <h3>Check-in Visitor</h3>
         <div class="form-row">
           <div class="form-group"><label>Visitor Name *</label><input type="text" id="v-name" placeholder="Visitor name"/></div>
-          <div class="form-group"><label>Student Name *</label><input type="text" id="v-student" placeholder="Student to meet"/></div>
+          <div class="form-group"><label>Visiting Student *</label><select id="v-student" onchange="el('v-student-name').value=this.options[this.selectedIndex]?.dataset?.name||''"></select></div>
           <div class="form-group"><label>Phone</label><input type="text" id="v-phone" placeholder="Phone number"/></div>
           <div class="form-group"><label>Purpose</label><input type="text" id="v-purpose" placeholder="Reason for visit"/></div>
         </div>
         <button class="btn btn-primary" onclick="saveVisitor()">Check In</button>
+        <input type="hidden" id="v-student-name"/>
       </div>
-      <div class="tbl-wrap"><table><thead><tr><th>Visitor</th><th>Student</th><th>Phone</th><th>Purpose</th><th>In Time</th><th>Status</th></tr></thead><tbody id="visitorTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Visitor</th><th>Student</th><th>Phone</th><th>Purpose</th><th>In Time</th><th>Status</th><th>Action</th></tr></thead><tbody id="visitorTbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
 
     <div class="panel" id="panel-complaints">
@@ -336,7 +337,7 @@
   </div>
 </section>
 
-<script src="js/api.js?v=8"></script>
+<script src="js/api.js?v=9"></script>
 <script>
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 </script>

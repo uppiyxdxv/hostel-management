@@ -230,7 +230,7 @@ async function populateStudentDropdowns() {
     cachedStudents = list || [];
     const opts = '<option value="">-- Select Student --</option>' +
       cachedStudents.map(s => `<option value="${s.id}" data-name="${s.name}">${s.id} — ${s.name} (${s.email})</option>`).join('');
-    ['f-student', 'c-student', 'a-student'].forEach(id => {
+    ['f-student', 'c-student', 'a-student', 'v-student'].forEach(id => {
       const sel = el(id);
       if (sel) sel.innerHTML = opts;
     });
@@ -371,20 +371,28 @@ async function loadVisitors() {
   try {
     const list = await api('/visitors');
     const tbody = el('visitorTbody');
-    if (!list || !list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No visitors today</td></tr>'; return; }
+    if (!list || !list.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No visitors</td></tr>'; return; }
     tbody.innerHTML = list.map(v => `<tr>
       <td><strong>${v.visitorName}</strong></td><td>${v.studentName || '-'}</td><td>${v.phone || '-'}</td>
       <td>${v.purpose || '-'}</td>
       <td>${v.inTime || '-'}</td>
       <td>${v.status === 'IN' ? `<span class="status-badge in-progress">IN</span>` : `<span class="status-badge active">OUT ${v.outTime||''}</span>`}</td>
+      <td>${v.status === 'IN' ? `<button class="btn btn-sm btn-warning" onclick="checkoutVisitor(${v.id})">Check Out</button>` : '-'}</td>
     </tr>`).join('');
   } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load visitors', 'error'); }
 }
 async function saveVisitor() {
-  const data = { visitorName: el('v-name').value.trim(), studentName: el('v-student').value.trim(), phone: el('v-phone').value.trim(), purpose: el('v-purpose').value.trim() };
-  if (!data.visitorName || !data.studentName) { showToast('Visitor & Student name required', 'error'); return; }
-  try { await api('/visitors', { method: 'POST', body: JSON.stringify(data) }); showToast('Visitor checked in'); el('v-name').value = ''; el('v-student').value = ''; el('v-phone').value = ''; el('v-purpose').value = ''; loadVisitors(); loadDashboard(); }
+  const sel = el('v-student');
+  const studentId = parseInt(sel.value);
+  const studentName = sel.options[sel.selectedIndex]?.dataset?.name || '';
+  const data = { visitorName: el('v-name').value.trim(), studentId, studentName, phone: el('v-phone').value.trim(), purpose: el('v-purpose').value.trim() };
+  if (!data.visitorName || !studentId) { showToast('Visitor & Student required', 'error'); return; }
+  try { await api('/visitors', { method: 'POST', body: JSON.stringify(data) }); showToast('Visitor checked in'); el('v-name').value = ''; sel.value = ''; el('v-phone').value = ''; el('v-purpose').value = ''; loadVisitors(); loadDashboard(); }
   catch (e) { showToast(e.error || 'Failed', 'error'); }
+}
+async function checkoutVisitor(id) {
+  try { await api('/visitors/' + id + '/checkout', { method: 'PUT' }); showToast('Visitor checked out'); loadVisitors(); }
+  catch (e) { showToast('Checkout failed', 'error'); }
 }
 
 // ── COMPLAINTS (admin) ──
