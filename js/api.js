@@ -55,6 +55,7 @@ function switchLoginMode(mode) { showLogin(mode); }
 // ── AUTH ──
 async function handleLogin(e) {
   e.preventDefault();
+  localStorage.removeItem('studentId');
   const btn = el('login-btn'); btn.disabled = true; btn.textContent = 'Signing in...';
   el('login-error').textContent = '';
   try {
@@ -69,6 +70,7 @@ async function handleLogin(e) {
     localStorage.setItem('username', data.username);
     localStorage.setItem('role', data.role);
     if (data.studentId) localStorage.setItem('studentId', data.studentId);
+    else localStorage.removeItem('studentId');
     showToast('Welcome, ' + data.username);
     if (data.role === 'student') enterStudentDashboard();
     else enterAdminDashboard();
