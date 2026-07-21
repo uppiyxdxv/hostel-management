@@ -9,7 +9,7 @@
   <title>Smart Hostel Management</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=7"/>
+  <link rel="stylesheet" href="css/style.css?v=8"/>
 </head>
 <body>
 
@@ -72,9 +72,9 @@
           <button class="login-tab active" data-role="admin" onclick="switchLoginMode('admin')">👤 Admin</button>
           <button class="login-tab" data-role="student" onclick="switchLoginMode('student')">👥 Student</button>
         </div>
-        <form onsubmit="handleLogin(event)">
-          <div class="form-group"><label id="login-field-label">Email</label><input type="text" id="login-username" placeholder="email@example.com" required/></div>
-          <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••" required/></div>
+        <form data-validate-form onsubmit="handleLogin(event)">
+          <div class="form-group"><label id="login-field-label">Email</label><input type="text" id="login-username" placeholder="email@example.com" data-validate="required,email" required/></div>
+          <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••" data-validate="required,password" required/></div>
           <div id="login-error" class="form-error"></div>
           <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem;" id="login-btn">Sign In</button>
         </form>
@@ -93,14 +93,14 @@
           <h2>Student Registration</h2>
           <p>Create your student account</p>
         </div>
-        <form onsubmit="handleRegister(event)">
+        <form data-validate-form onsubmit="handleRegister(event)">
           <div class="form-row">
-            <div class="form-group"><label>Full Name *</label><input type="text" id="reg-name" placeholder="John Doe" required/></div>
-            <div class="form-group"><label>Email *</label><input type="email" id="reg-email" placeholder="john@example.com" required/></div>
+            <div class="form-group"><label>Full Name *</label><input type="text" id="reg-name" placeholder="John Doe" data-validate="required,name" required/></div>
+            <div class="form-group"><label>Email *</label><input type="email" id="reg-email" placeholder="john@example.com" data-validate="required,email" required/></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Phone *</label><input type="text" id="reg-phone" placeholder="+91 9876543210" required/></div>
-            <div class="form-group"><label>Password *</label><input type="password" id="reg-password" placeholder="Create a password" required/></div>
+            <div class="form-group"><label>Phone *</label><input type="text" id="reg-phone" placeholder="+91 9876543210" data-validate="required,phone" required/></div>
+            <div class="form-group"><label>Password *</label><input type="password" id="reg-password" placeholder="Create a password" data-validate="required,password" required/></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Gender</label><select id="reg-gender"><option value="">Select</option><option>MALE</option><option>FEMALE</option><option>OTHER</option></select></div>
@@ -205,16 +205,16 @@
       <div class="form-card">
         <h3>Create Fee Record</h3>
         <div class="form-row">
-          <div class="form-group"><label>Student ID *</label><input type="number" id="f-student" placeholder="1"/></div>
-          <div class="form-group"><label>Student Name</label><input type="text" id="f-student-name" placeholder="John Doe"/></div>
+          <div class="form-group"><label>Student *</label><select id="f-student" onchange="el('f-student-name').value=this.options[this.selectedIndex]?.dataset?.name||''"></select></div>
           <div class="form-group"><label>Amount (₹) *</label><input type="number" id="f-amount" min="0" step="100" placeholder="10000"/></div>
+          <div class="form-group"><label>Due Date *</label><input type="date" id="f-due"/></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Due Date *</label><input type="date" id="f-due"/></div>
           <div class="form-group"><label>Type</label><select id="f-type"><option value="HOSTEL">Hostel Fee</option><option value="MESS">Mess Fee</option><option value="TOTAL">Total</option></select></div>
           <div class="form-group"><label>Remark</label><input type="text" id="f-remark" placeholder="Optional"/></div>
         </div>
         <button class="btn btn-primary" onclick="saveFee()">Create Fee</button>
+        <input type="hidden" id="f-student-name"/>
       </div>
       <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Amount</th><th>Type</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead><tbody id="feeTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
@@ -239,16 +239,16 @@
       <div class="form-card">
         <h3>Register Complaint</h3>
         <div class="form-row">
-          <div class="form-group"><label>Student ID *</label><input type="number" id="c-student" placeholder="1"/></div>
-          <div class="form-group"><label>Student Name</label><input type="text" id="c-student-name" placeholder="John Doe"/></div>
+          <div class="form-group"><label>Student *</label><select id="c-student" onchange="el('c-student-name').value=this.options[this.selectedIndex]?.dataset?.name||''"></select></div>
           <div class="form-group"><label>Title *</label><input type="text" id="c-title" placeholder="Issue summary"/></div>
+          <div class="form-group"><label>Category</label><select id="c-category"><option value="ELECTRIC">Electrical</option><option value="PLUMBING">Plumbing</option><option value="CLEANING">Cleaning</option><option value="OTHER">Other</option></select></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Category</label><select id="c-category"><option value="ELECTRIC">Electrical</option><option value="PLUMBING">Plumbing</option><option value="CLEANING">Cleaning</option><option value="OTHER">Other</option></select></div>
-          <div class="form-group"><label>Priority</label><select id="c-priority"><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select></div>
+          <div class="form-group"><label>Priority</label><select id="c-priority"><option value="LOW">Low</option><option value="MEDIUM" selected>Medium</option><option value="HIGH">High</option></select></div>
           <div class="form-group"><label>Description</label><textarea id="c-desc" rows="2" placeholder="Detailed description..."></textarea></div>
         </div>
         <button class="btn btn-primary" onclick="saveComplaint()">Submit Complaint</button>
+        <input type="hidden" id="c-student-name"/>
       </div>
       <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Title</th><th>Description</th><th>Category</th><th>Status</th><th>Priority</th><th>Action</th></tr></thead><tbody id="complaintTbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
@@ -258,15 +258,15 @@
       <div class="form-card">
         <h3>Mark Attendance</h3>
         <div class="form-row">
-          <div class="form-group"><label>Student ID *</label><input type="number" id="a-student" placeholder="1"/></div>
-          <div class="form-group"><label>Student Name</label><input type="text" id="a-student-name" placeholder="John Doe"/></div>
+          <div class="form-group"><label>Student *</label><select id="a-student" onchange="el('a-student-name').value=this.options[this.selectedIndex]?.dataset?.name||''"></select></div>
           <div class="form-group"><label>Status</label><select id="a-status"><option value="PRESENT">Present</option><option value="ABSENT">Absent</option><option value="LEAVE">Leave</option></select></div>
+          <div class="form-group"><label>In Time</label><input type="time" id="a-intime"/></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>In Time</label><input type="time" id="a-intime"/></div>
           <div class="form-group"><label>Remark</label><input type="text" id="a-remark" placeholder="Optional"/></div>
         </div>
         <button class="btn btn-primary" onclick="saveAttendance()">Mark Attendance</button>
+        <input type="hidden" id="a-student-name"/>
       </div>
       <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Date</th><th>Status</th><th>In Time</th><th>Out Time</th><th>Remark</th></tr></thead><tbody id="attTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
     </div>
@@ -329,10 +329,14 @@
       <h3>✅ My Attendance</h3>
       <div id="sd-attendance-content">Loading...</div>
     </div>
+    <div class="sd-card sd-card-visitors">
+      <h3>🚪 My Visitors</h3>
+      <div id="sd-visitors-content">Loading...</div>
+    </div>
   </div>
 </section>
 
-<script src="js/api.js?v=7"></script>
+<script src="js/api.js?v=8"></script>
 <script>
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 </script>

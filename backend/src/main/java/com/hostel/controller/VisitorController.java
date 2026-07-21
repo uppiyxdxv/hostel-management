@@ -29,4 +29,7 @@ public class VisitorController {
     @GetMapping("/today") public List<Visitor> getToday() {
         return repo.findByDate(java.time.LocalDate.now());
     }
+    @GetMapping("/student/{studentId}") public List<Visitor> getByStudent(@PathVariable Long studentId) {
+        return repo.findByStudentId(studentId);
+    }
 }

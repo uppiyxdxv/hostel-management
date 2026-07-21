@@ -1,6 +1,7 @@
 const API = 'https://hostel-management-api-0nr9.onrender.com/api';
 let currentStudentId = null;
 let loginMode = 'admin';
+let cachedStudents = [];
 
 async function api(path, opts = {}) {
   const token = localStorage.getItem('token');
@@ -25,6 +26,57 @@ function showSection(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   const section = document.getElementById(id);
   if (section) section.classList.add('active');
+}
+
+// ── FORM VALIDATION ──
+const validationRules = {
+  email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, msg: 'Enter a valid email address' },
+  phone: { pattern: /^[\d\s+\-().]{7,15}$/, msg: 'Enter a valid phone number' },
+  password: { pattern: /.{6,}/, msg: 'Password must be at least 6 characters' },
+  name: { pattern: /.{2,}/, msg: 'Name must be at least 2 characters' },
+  required: { pattern: /.+/, msg: 'This field is required' },
+  amount: { pattern: /^\d+(\.\d{1,2})?$/, msg: 'Enter a valid amount' },
+  date: { pattern: /^\d{4}-\d{2}-\d{2}$/, msg: 'Select a valid date' }
+};
+
+function validateField(input, rules) {
+  const val = input.value.trim();
+  let valid = true;
+  let msg = '';
+  for (const rule of rules) {
+    const r = validationRules[rule];
+    if (r && !r.pattern.test(val)) { valid = false; msg = r.msg; break; }
+  }
+  if (rules.includes('required') && !val) { valid = false; msg = 'This field is required'; }
+  input.classList.toggle('invalid', !valid && val.length > 0);
+  input.classList.toggle('valid', valid && val.length > 0);
+  let msgEl = input.parentElement.querySelector('.validation-msg');
+  if (!msgEl) { msgEl = document.createElement('span'); msgEl.className = 'validation-msg'; input.parentElement.appendChild(msgEl); }
+  msgEl.textContent = (!valid && val.length > 0) ? msg : '';
+  msgEl.className = 'validation-msg' + (!valid && val.length > 0 ? ' error' : '');
+  return valid;
+}
+
+function validateForm(formEl) {
+  let allValid = true;
+  formEl.querySelectorAll('[data-validate]').forEach(input => {
+    const rules = input.dataset.validate.split(',');
+    if (!validateField(input, rules)) allValid = false;
+  });
+  return allValid;
+}
+
+function attachValidation(formEl) {
+  formEl.querySelectorAll('[data-validate]').forEach(input => {
+    input.addEventListener('input', () => {
+      const rules = input.dataset.validate.split(',');
+      validateField(input, rules);
+    });
+    input.addEventListener('blur', () => {
+      const rules = input.dataset.validate.split(',');
+      validateField(input, rules);
+    });
+  });
 }
 
 // ── LOGIN MODE SWITCHING ──
@@ -56,13 +108,15 @@ function switchLoginMode(mode) { showLogin(mode); }
 async function handleLogin(e) {
   e.preventDefault();
   localStorage.removeItem('studentId');
+  const form = e.target;
+  if (!validateForm(form)) return;
   const btn = el('login-btn'); btn.disabled = true; btn.textContent = 'Signing in...';
   el('login-error').textContent = '';
   try {
     const res = await fetch(API + '/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: el('login-username').value, password: el('login-password').value, mode: loginMode })
+      body: JSON.stringify({ username: el('login-username').value.trim(), password: el('login-password').value, mode: loginMode })
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Login failed'); }
     const data = await res.json();
@@ -76,13 +130,15 @@ async function handleLogin(e) {
     else enterAdminDashboard();
   } catch (e) {
     el('login-error').textContent = e.message || 'Invalid credentials';
-    showToast(e.message, 'error');
+    if (e.message !== 'Session expired') showToast(e.message, 'error');
   }
   btn.disabled = false; btn.textContent = 'Sign In';
 }
 
 async function handleRegister(e) {
   e.preventDefault();
+  const form = e.target;
+  if (!validateForm(form)) return;
   const btn = el('register-btn'); btn.disabled = true; btn.textContent = 'Registering...';
   el('register-error').textContent = '';
   try {
@@ -95,15 +151,13 @@ async function handleRegister(e) {
       dob: el('reg-dob').value,
       address: el('reg-address').value.trim()
     };
-    if (!data.name || !data.email || !data.phone || !data.password) throw new Error('Name, Email, Phone & Password required');
     await api('/auth/register', { method: 'POST', body: JSON.stringify(data) });
     showToast('Registration successful! You can now login.');
-    el('reg-name').value = ''; el('reg-email').value = ''; el('reg-phone').value = ''; el('reg-password').value = '';
-    el('reg-gender').value = ''; el('reg-dob').value = ''; el('reg-address').value = '';
+    form.reset();
     showLogin('student');
   } catch (e) {
     el('register-error').textContent = e.message || e.error || 'Registration failed';
-    showToast(e.message || 'Failed', 'error');
+    if (e.message !== 'Session expired') showToast(e.message || 'Failed', 'error');
   }
   btn.disabled = false; btn.textContent = 'Register';
 }
@@ -164,8 +218,23 @@ function initAdminDashboard() {
   loadVisitors();
   loadComplaints();
   loadAttendance();
+  populateStudentDropdowns();
   if (statsInterval) clearInterval(statsInterval);
   statsInterval = setInterval(() => { loadDashboard(); }, 30000);
+}
+
+// ── STUDENT DROPDOWNS (admin forms) ──
+async function populateStudentDropdowns() {
+  try {
+    const list = await api('/students');
+    cachedStudents = list || [];
+    const opts = '<option value="">-- Select Student --</option>' +
+      cachedStudents.map(s => `<option value="${s.id}" data-name="${s.name}">${s.id} — ${s.name} (${s.email})</option>`).join('');
+    ['f-student', 'c-student', 'a-student'].forEach(id => {
+      const sel = el(id);
+      if (sel) sel.innerHTML = opts;
+    });
+  } catch (e) { console.error('Failed to load students for dropdowns', e); }
 }
 
 // ── STUDENTS (admin) ──
@@ -195,13 +264,13 @@ async function saveStudent() {
     await api('/students', { method: 'POST', body: JSON.stringify(data) });
     showToast('Student registered');
     el('s-name').value = ''; el('s-email').value = ''; el('s-phone').value = ''; el('s-address').value = ''; el('s-gender').value = ''; el('s-dob').value = '';
-    loadStudents(); loadDashboard();
+    loadStudents(); loadDashboard(); populateStudentDropdowns();
   } catch (e) { showToast(e.error || 'Failed to save', 'error'); }
 }
 
 async function deleteStudent(id) {
   if (!confirm('Delete this student?')) return;
-  try { await api('/students/' + id, { method: 'DELETE' }); showToast('Student deleted'); loadStudents(); loadDashboard(); loadRooms(); }
+  try { await api('/students/' + id, { method: 'DELETE' }); showToast('Student deleted'); loadStudents(); loadDashboard(); loadRooms(); populateStudentDropdowns(); }
   catch (e) { showToast('Delete failed', 'error'); }
 }
 
@@ -282,9 +351,14 @@ async function loadFees() {
   } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load fees', 'error'); }
 }
 async function saveFee() {
-  const data = { studentId: parseInt(el('f-student').value), studentName: el('f-student-name').value.trim(), amount: parseFloat(el('f-amount').value), dueDate: el('f-due').value, type: el('f-type').value, remark: el('f-remark').value.trim() };
-  if (!data.studentId || !data.amount || !data.dueDate) { showToast('Student, Amount & Due Date required', 'error'); return; }
-  try { await api('/fees', { method: 'POST', body: JSON.stringify(data) }); showToast('Fee record created'); el('f-amount').value = ''; el('f-due').value = ''; el('f-remark').value = ''; loadFees(); loadDashboard(); }
+  const sel = el('f-student');
+  const studentId = parseInt(sel.value);
+  const studentName = sel.options[sel.selectedIndex]?.dataset?.name || '';
+  const amount = parseFloat(el('f-amount').value);
+  const dueDate = el('f-due').value;
+  const data = { studentId, studentName, amount, dueDate, type: el('f-type').value, remark: el('f-remark').value.trim() };
+  if (!studentId || !amount || !dueDate) { showToast('Student, Amount & Due Date required', 'error'); return; }
+  try { await api('/fees', { method: 'POST', body: JSON.stringify(data) }); showToast('Fee record created'); el('f-amount').value = ''; el('f-due').value = ''; el('f-remark').value = ''; sel.value = ''; loadFees(); loadDashboard(); }
   catch (e) { showToast(e.error || 'Failed', 'error'); }
 }
 async function payFee(id) {
@@ -331,9 +405,13 @@ async function loadComplaints() {
   } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load complaints', 'error'); }
 }
 async function saveComplaint() {
-  const data = { studentId: parseInt(el('c-student').value), studentName: el('c-student-name').value.trim(), title: el('c-title').value.trim(), description: el('c-desc').value.trim(), category: el('c-category').value, priority: el('c-priority').value };
-  if (!data.studentId || !data.title) { showToast('Student & Title required', 'error'); return; }
-  try { await api('/complaints', { method: 'POST', body: JSON.stringify(data) }); showToast('Complaint registered'); el('c-title').value = ''; el('c-desc').value = ''; loadComplaints(); loadDashboard(); }
+  const sel = el('c-student');
+  const studentId = parseInt(sel.value);
+  const studentName = sel.options[sel.selectedIndex]?.dataset?.name || '';
+  const title = el('c-title').value.trim();
+  const data = { studentId, studentName, title, description: el('c-desc').value.trim(), category: el('c-category').value, priority: el('c-priority').value };
+  if (!studentId || !title) { showToast('Student & Title required', 'error'); return; }
+  try { await api('/complaints', { method: 'POST', body: JSON.stringify(data) }); showToast('Complaint registered'); el('c-title').value = ''; el('c-desc').value = ''; sel.value = ''; loadComplaints(); loadDashboard(); }
   catch (e) { showToast(e.error || 'Failed', 'error'); }
 }
 async function updateComplaintStatus(id, status, resolution) {
@@ -363,9 +441,12 @@ async function loadAttendance() {
   } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load attendance', 'error'); }
 }
 async function saveAttendance() {
-  const data = { studentId: parseInt(el('a-student').value), studentName: el('a-student-name').value.trim(), status: el('a-status').value, date: new Date().toISOString().slice(0, 10), inTime: el('a-intime').value || null, remark: el('a-remark').value.trim() };
-  if (!data.studentId) { showToast('Student required', 'error'); return; }
-  try { await api('/attendance', { method: 'POST', body: JSON.stringify(data) }); showToast('Attendance marked'); el('a-intime').value = ''; el('a-remark').value = ''; loadAttendance(); loadDashboard(); }
+  const sel = el('a-student');
+  const studentId = parseInt(sel.value);
+  const studentName = sel.options[sel.selectedIndex]?.dataset?.name || '';
+  const data = { studentId, studentName, status: el('a-status').value, date: new Date().toISOString().slice(0, 10), inTime: el('a-intime').value || null, remark: el('a-remark').value.trim() };
+  if (!studentId) { showToast('Student required', 'error'); return; }
+  try { await api('/attendance', { method: 'POST', body: JSON.stringify(data) }); showToast('Attendance marked'); el('a-intime').value = ''; el('a-remark').value = ''; sel.value = ''; loadAttendance(); loadDashboard(); }
   catch (e) { showToast(e.error || 'Failed', 'error'); }
 }
 async function markMultiplePresent() {
@@ -415,6 +496,7 @@ async function loadStudentDashboard() {
     await loadStudentFees(sid);
     await loadStudentComplaints(sid);
     await loadStudentAttendance(sid);
+    await loadStudentVisitors(sid);
   } catch (e) {
     if (e.message === 'Session expired') return;
     showToast('Failed to load dashboard', 'error');
@@ -439,7 +521,7 @@ async function loadStudentComplaints(sid) {
     if (!list || !list.length) { c.innerHTML = '<p style="color:var(--muted)">No complaints submitted</p>'; return; }
     c.innerHTML = list.map(cp => `<div style="padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.82rem;">
       <strong>${cp.title}</strong> <span class="status-badge ${cp.status === 'RESOLVED' ? 'resolved' : cp.status === 'IN_PROGRESS' ? 'in-progress' : 'pending'}">${cp.status.replace('_',' ')}</span>
-      <div style="color:var(--muted);font-size:.75rem;">${cp.description || ''}${cp.resolution ? '<br/>Resolution: '+cp.resolution : ''}</div>
+      <div style="color:var(--muted);font-size:.75rem;">${cp.description || ''}${cp.resolution ? '<br/><strong>Resolution:</strong> '+cp.resolution : ''}${cp.resolvedAt ? ' <em>('+cp.resolvedAt+')</em>' : ''}</div>
     </div>`).join('');
   } catch (e) { if (e.message !== 'Session expired') el('sd-complaints-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
 }
@@ -469,7 +551,23 @@ async function loadStudentAttendance(sid) {
   } catch (e) { if (e.message !== 'Session expired') el('sd-attendance-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
 }
 
+async function loadStudentVisitors(sid) {
+  try {
+    const list = await api('/visitors/student/' + sid);
+    const c = el('sd-visitors-content');
+    if (!list || !list.length) { c.innerHTML = '<p style="color:var(--muted)">No visitor records</p>'; return; }
+    c.innerHTML = '<table style="font-size:.8rem"><thead><tr><th>Visitor</th><th>Phone</th><th>Purpose</th><th>In</th><th>Out</th><th>Status</th></tr></thead><tbody>' +
+      list.slice(-10).reverse().map(v => `<tr>
+        <td><strong>${v.visitorName}</strong></td><td>${v.phone || '-'}</td><td>${v.purpose || '-'}</td>
+        <td>${v.inTime || '-'}</td><td>${v.outTime || '-'}</td>
+        <td><span class="status-badge ${v.status === 'IN' ? 'in-progress' : 'active'}">${v.status}</span></td>
+      </tr>`).join('') +
+      '</tbody></table>';
+  } catch (e) { if (e.message !== 'Session expired') el('sd-visitors-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
+}
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
   showSection('section-home');
+  document.querySelectorAll('form[data-validate-form]').forEach(attachValidation);
 });

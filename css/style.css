@@ -65,6 +65,16 @@ tr:hover td{background:var(--primary-light)}
 .empty-state{text-align:center;padding:3rem;color:var(--muted)}
 .empty-state .ico{font-size:2.5rem;margin-bottom:.5rem}
 
+/* ── FORM VALIDATION ── */
+.form-group input:invalid:not(:placeholder-shown),
+.form-group select:invalid:not([value=""]) { border-color: var(--danger); }
+.form-group input:valid:not(:placeholder-shown) { border-color: var(--success); }
+input.invalid, select.invalid, textarea.invalid { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239,68,68,.1) !important; }
+input.valid, select.valid { border-color: var(--success) !important; box-shadow: 0 0 0 3px rgba(16,185,129,.1) !important; }
+.validation-msg { font-size:.75rem; margin-top:.2rem; min-height:1rem; }
+.validation-msg.error { color: var(--danger); }
+.validation-msg.success { color: var(--success); }
+
 /* ── SECTION TOGGLE ── */
 .section{display:none}
 .section.active{display:block}
