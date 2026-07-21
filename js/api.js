@@ -26,17 +26,13 @@ function showPanel(id) {
   document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
   const panel = el(id);
   if (panel) panel.classList.add('active');
-  const link = document.querySelector(`.sidebar-nav a[onclick*="${id}"]`);
-  if (link) link.classList.add('active');
 }
 
-// ── NAVIGATION ──
 function goHome() {
   showPanel('panel-home');
   loadDashboard();
 }
 
-// ── DASHBOARD ──
 async function loadDashboard() {
   try {
     const [students, rooms, fees, visitors, complaints, attendance] = await Promise.all([
@@ -54,7 +50,6 @@ async function loadDashboard() {
   } catch (e) { console.error('Dashboard load error', e); }
 }
 
-// ── STUDENTS ──
 async function loadStudents() {
   try {
     el('studentCount').textContent = 'Loading...';
@@ -83,14 +78,12 @@ async function saveStudent() {
     loadStudents(); loadDashboard();
   } catch (e) { showToast(e.error || 'Failed to save', 'error'); }
 }
-
 async function deleteStudent(id) {
   if (!confirm('Delete this student?')) return;
   try { await api('/students/' + id, { method: 'DELETE' }); showToast('Student deleted'); loadStudents(); loadDashboard(); }
   catch (e) { showToast('Delete failed', 'error'); }
 }
 
-// ── ROOMS ──
 async function loadRooms() {
   try {
     const list = await api('/rooms');
@@ -116,7 +109,6 @@ async function saveRoom() {
   } catch (e) { showToast(e.error || 'Failed to save', 'error'); }
 }
 
-// ── FEES ──
 async function loadFees() {
   try {
     const list = await api('/fees');
@@ -144,7 +136,6 @@ async function payFee(id) {
   catch (e) { showToast('Payment failed', 'error'); }
 }
 
-// ── VISITORS ──
 async function loadVisitors() {
   try {
     const list = await api('/visitors');
@@ -165,7 +156,6 @@ async function saveVisitor() {
   catch (e) { showToast(e.error || 'Failed', 'error'); }
 }
 
-// ── COMPLAINTS ──
 async function loadComplaints() {
   try {
     const list = await api('/complaints');
@@ -198,7 +188,6 @@ async function resolveComplaint(id) {
   await updateComplaintStatus(id, 'RESOLVED', resolution);
 }
 
-// ── ATTENDANCE ──
 async function loadAttendance() {
   try {
     const today = new Date().toISOString().slice(0, 10);
@@ -235,7 +224,6 @@ async function markMultiplePresent() {
   } catch (e) { showToast('Failed', 'error'); }
 }
 
-// ── INIT ──
 async function init() {
   loadDashboard();
   loadStudents();
@@ -244,7 +232,6 @@ async function init() {
   loadVisitors();
   loadComplaints();
   loadAttendance();
-  // Auto-refresh every 30s
   statsInterval = setInterval(() => { loadDashboard(); }, 30000);
 }
 document.addEventListener('DOMContentLoaded', init);
