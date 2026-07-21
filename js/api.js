@@ -31,16 +31,21 @@ function showSection(id) {
 function showLogin(mode) {
   loginMode = mode;
   document.querySelectorAll('.login-tab').forEach(t => t.classList.toggle('active', t.dataset.role === mode));
+  const alt = el('login-alt');
   if (mode === 'admin') {
     el('login-logo').textContent = '🏨';
     el('login-title').textContent = 'Admin Login';
     el('login-sub').textContent = 'Sign in to manage the hostel';
-    el('login-field-label').textContent = 'Email';
+    el('login-field-label').textContent = 'Admin Email';
+    el('login-username').placeholder = 'Enter admin email';
+    if (alt) alt.innerHTML = '';
   } else {
     el('login-logo').textContent = '👥';
     el('login-title').textContent = 'Student Login';
     el('login-sub').textContent = 'Sign in to view your dashboard';
-    el('login-field-label').textContent = 'Email';
+    el('login-field-label').textContent = 'Student Email';
+    el('login-username').placeholder = 'Enter your email';
+    if (alt) alt.innerHTML = 'New student? <a href="#" onclick="showSection(\'section-register\')">Register here</a>';
   }
   showSection('section-login');
 }
@@ -56,7 +61,7 @@ async function handleLogin(e) {
     const res = await fetch(API + '/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: el('login-username').value, password: el('login-password').value })
+      body: JSON.stringify({ username: el('login-username').value, password: el('login-password').value, mode: loginMode })
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Login failed'); }
     const data = await res.json();

@@ -20,7 +20,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        TokenInfo info = authService.login(body.get("username"), body.get("password"));
+        String mode = body.get("mode");
+        TokenInfo info = authService.login(body.get("username"), body.get("password"), mode);
         if (info == null) return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         Map<String, Object> res = new HashMap<>();
         res.put("token", info.token); res.put("username", info.username);

@@ -27,12 +27,15 @@ public class AuthService {
         }
     }
 
-    public TokenInfo login(String username, String password) {
-        if (adminUsername.equals(username) && adminPassword.equals(password)) {
-            String token = UUID.randomUUID().toString();
-            TokenInfo info = new TokenInfo(token, username, "admin", null);
-            tokens.put(token, info);
-            return info;
+    public TokenInfo login(String username, String password, String mode) {
+        if ("admin".equals(mode)) {
+            if (adminUsername.equals(username) && adminPassword.equals(password)) {
+                String token = UUID.randomUUID().toString();
+                TokenInfo info = new TokenInfo(token, username, "admin", null);
+                tokens.put(token, info);
+                return info;
+            }
+            return null;
         }
         Student s = studentRepo.findByEmailAndPassword(username, password).orElse(null);
         if (s != null) {
