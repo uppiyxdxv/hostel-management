@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Smart Hostel Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="hostel-layout">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="ico">🏨</div> Smart Hostel</div>
+    <nav class="sidebar-nav">
+      <a href="#" onclick="goHome()" class="active">📊 Dashboard</a>
+      <a href="#" onclick="showPanel('panel-students');loadStudents()">👥 Students</a>
+      <a href="#" onclick="showPanel('panel-rooms');loadRooms()">🛏 Rooms</a>
+      <a href="#" onclick="showPanel('panel-fees');loadFees()">💰 Fees</a>
+      <a href="#" onclick="showPanel('panel-visitors');loadVisitors()">🚪 Visitors</a>
+      <a href="#" onclick="showPanel('panel-complaints');loadComplaints()">📋 Complaints</a>
+      <a href="#" onclick="showPanel('panel-attendance');loadAttendance()">✅ Attendance</a>
+    </nav>
+    <div class="sidebar-foot">© 2025 Smart Hostel System</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <div class="main-header">
+      <div><h1 id="pageTitle">🏨 Dashboard</h1><div class="date" id="todayDate"></div></div>
+    </div>
+
+    <!-- ── PANEL: HOME ── -->
+    <div class="panel active" id="panel-home">
+      <div class="stats-row">
+        <div class="stat-card"><div class="icon">👥</div><div class="value" id="stat-total-students">0</div><div class="label">Total Students</div></div>
+        <div class="stat-card"><div class="icon">🛏</div><div class="value" id="stat-total-rooms">0</div><div class="label">Total Rooms</div></div>
+        <div class="stat-card"><div class="icon">💰</div><div class="value" id="stat-unpaid-fees">0</div><div class="label">Unpaid Fees</div></div>
+        <div class="stat-card"><div class="icon">🚪</div><div class="value" id="stat-visitors-today">0</div><div class="label">Visitors Today</div></div>
+        <div class="stat-card"><div class="icon">📋</div><div class="value" id="stat-pending-complaints">0</div><div class="label">Open Complaints</div></div>
+        <div class="stat-card"><div class="icon">✅</div><div class="value" id="stat-present-today">0</div><div class="label">Present Today</div></div>
+      </div>
+      <div class="module-grid">
+        <a href="#" class="module-card" onclick="showPanel('panel-students');loadStudents()"><div class="ico">👥</div><h3>Students</h3><p>Register & manage students</p></a>
+        <a href="#" class="module-card" onclick="showPanel('panel-rooms');loadRooms()"><div class="ico">🛏</div><h3>Rooms</h3><p>Allocate & manage rooms</p></a>
+        <a href="#" class="module-card" onclick="showPanel('panel-fees');loadFees()"><div class="ico">💰</div><h3>Fees</h3><p>Track fee payments</p></a>
+        <a href="#" class="module-card" onclick="showPanel('panel-visitors');loadVisitors()"><div class="ico">🚪</div><h3>Visitors</h3><p>Visitor entry records</p></a>
+        <a href="#" class="module-card" onclick="showPanel('panel-complaints');loadComplaints()"><div class="ico">📋</div><h3>Complaints</h3><p>Manage complaints</p></a>
+        <a href="#" class="module-card" onclick="showPanel('panel-attendance');loadAttendance()"><div class="ico">✅</div><h3>Attendance</h3><p>Daily attendance</p></a>
+      </div>
+    </div>
+
+    <!-- ── PANEL: STUDENTS ── -->
+    <div class="panel" id="panel-students">
+      <div class="panel-header"><h2>👥 Students <span id="studentCount" style="font-size:.85rem;color:var(--muted);font-weight:400;"></span></h2></div>
+      <div class="form-card">
+        <h3>Register New Student</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Full Name *</label><input type="text" id="s-name" placeholder="John Doe"/></div>
+          <div class="form-group"><label>Email *</label><input type="email" id="s-email" placeholder="john@example.com"/></div>
+          <div class="form-group"><label>Phone *</label><input type="text" id="s-phone" placeholder="+91 9876543210"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Gender</label><select id="s-gender"><option value="">Select</option><option>MALE</option><option>FEMALE</option><option>OTHER</option></select></div>
+          <div class="form-group"><label>Date of Birth</label><input type="date" id="s-dob"/></div>
+          <div class="form-group"><label>Address</label><input type="text" id="s-address" placeholder="Room/Street"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveStudent()">Register Student</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Room</th><th>Gender</th><th>Status</th><th>Action</th></tr></thead><tbody id="studentTbody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <!-- ── PANEL: ROOMS ── -->
+    <div class="panel" id="panel-rooms">
+      <div class="panel-header"><h2>🛏 Rooms <span id="roomCount" style="font-size:.85rem;color:var(--muted);font-weight:400;"></span> <span style="font-size:.82rem;color:var(--muted);">| Available: <span id="availableCount" style="color:var(--success);font-weight:700;">0</span></span></h2></div>
+      <div class="form-card">
+        <h3>Add New Room</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Room Number *</label><input type="text" id="r-number" placeholder="A-101"/></div>
+          <div class="form-group"><label>Floor *</label><input type="text" id="r-floor" placeholder="Ground"/></div>
+          <div class="form-group"><label>Type</label><select id="r-type"><option value="SINGLE">Single</option><option value="DOUBLE">Double</option><option value="DORM">Dormitory</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Capacity *</label><input type="number" id="r-capacity" min="1" placeholder="2"/></div>
+          <div class="form-group"><label>Rent (₹)</label><input type="number" id="r-rent" min="0" step="100" placeholder="5000"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveRoom()">Add Room</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>Room</th><th>Floor</th><th>Type</th><th>Occupancy</th><th>Rent</th><th>Status</th></tr></thead><tbody id="roomTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <!-- ── PANEL: FEES ── -->
+    <div class="panel" id="panel-fees">
+      <div class="panel-header"><h2>💰 Fee Management</h2><div style="display:flex;gap:.5rem;font-size:.82rem;"><span>Total: <strong id="totalFees">₹0</strong></span><span>Paid: <strong id="paidFees" style="color:var(--success);">0</strong></span><span>Unpaid: <strong id="unpaidFees" style="color:var(--danger);">0</strong></span></div></div>
+      <div class="form-card">
+        <h3>Create Fee Record</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Student ID *</label><input type="number" id="f-student" placeholder="1"/></div>
+          <div class="form-group"><label>Student Name</label><input type="text" id="f-student-name" placeholder="John Doe"/></div>
+          <div class="form-group"><label>Amount (₹) *</label><input type="number" id="f-amount" min="0" step="100" placeholder="10000"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Due Date *</label><input type="date" id="f-due"/></div>
+          <div class="form-group"><label>Type</label><select id="f-type"><option value="HOSTEL">Hostel Fee</option><option value="MESS">Mess Fee</option><option value="TOTAL">Total</option></select></div>
+          <div class="form-group"><label>Remark</label><input type="text" id="f-remark" placeholder="Optional"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveFee()">Create Fee</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Amount</th><th>Type</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead><tbody id="feeTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <!-- ── PANEL: VISITORS ── -->
+    <div class="panel" id="panel-visitors">
+      <div class="panel-header"><h2>🚪 Visitor Records</h2></div>
+      <div class="form-card">
+        <h3>Check-in Visitor</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Visitor Name *</label><input type="text" id="v-name" placeholder="Visitor name"/></div>
+          <div class="form-group"><label>Student Name *</label><input type="text" id="v-student" placeholder="Student to meet"/></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="v-phone" placeholder="Phone number"/></div>
+          <div class="form-group"><label>Purpose</label><input type="text" id="v-purpose" placeholder="Reason for visit"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveVisitor()">Check In</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>Visitor</th><th>Student</th><th>Phone</th><th>Purpose</th><th>In Time</th><th>Status</th></tr></thead><tbody id="visitorTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <!-- ── PANEL: COMPLAINTS ── -->
+    <div class="panel" id="panel-complaints">
+      <div class="panel-header"><h2>📋 Complaint Management</h2></div>
+      <div class="form-card">
+        <h3>Register Complaint</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Student ID *</label><input type="number" id="c-student" placeholder="1"/></div>
+          <div class="form-group"><label>Student Name</label><input type="text" id="c-student-name" placeholder="John Doe"/></div>
+          <div class="form-group"><label>Title *</label><input type="text" id="c-title" placeholder="Issue summary"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Category</label><select id="c-category"><option value="ELECTRIC">Electrical</option><option value="PLUMBING">Plumbing</option><option value="CLEANING">Cleaning</option><option value="OTHER">Other</option></select></div>
+          <div class="form-group"><label>Priority</label><select id="c-priority"><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select></div>
+          <div class="form-group"><label>Description</label><textarea id="c-desc" rows="2" placeholder="Detailed description..."></textarea></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveComplaint()">Submit Complaint</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Title</th><th>Description</th><th>Category</th><th>Status</th><th>Priority</th><th>Action</th></tr></thead><tbody id="complaintTbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <!-- ── PANEL: ATTENDANCE ── -->
+    <div class="panel" id="panel-attendance">
+      <div class="panel-header"><h2>✅ Daily Attendance</h2><div style="display:flex;gap:.5rem;"><button class="btn btn-success" onclick="markMultiplePresent()">Mark All Present</button></div></div>
+      <div class="form-card">
+        <h3>Mark Attendance</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Student ID *</label><input type="number" id="a-student" placeholder="1"/></div>
+          <div class="form-group"><label>Student Name</label><input type="text" id="a-student-name" placeholder="John Doe"/></div>
+          <div class="form-group"><label>Status</label><select id="a-status"><option value="PRESENT">Present</option><option value="ABSENT">Absent</option><option value="LEAVE">Leave</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>In Time</label><input type="time" id="a-intime"/></div>
+          <div class="form-group"><label>Remark</label><input type="text" id="a-remark" placeholder="Optional"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveAttendance()">Mark Attendance</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>Student</th><th>Date</th><th>Status</th><th>In Time</th><th>Out Time</th><th>Remark</th></tr></thead><tbody id="attTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div>
+    </div>
+  </main>
+</div>
+<script src="js/api.js"></script>
+<script>
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+</script>
+</body>
+</html>
