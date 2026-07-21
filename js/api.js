@@ -1,4 +1,4 @@
-const API = 'http://localhost:8080/api';
+const API = 'https://hostel-management-api-0nr9.onrender.com/api';
 
 async function api(path, opts = {}) {
   const r = await fetch(API + path, {
