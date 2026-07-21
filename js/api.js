@@ -178,7 +178,7 @@ async function loadStudents() {
         <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.id})">✕</button>
       </td>
     </tr>`).join('');
-  } catch (e) { showToast('Failed to load students', 'error'); }
+  } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load students', 'error'); }
 }
 
 async function saveStudent() {
@@ -211,7 +211,7 @@ async function openAllotModal(studentId, studentName) {
     sel.innerHTML = available.length ? available.map(r =>
       `<option value="${r.id}">${r.roomNumber} — ${r.type} (${r.occupied}/${r.capacity}) ₹${r.rent}</option>`
     ).join('') : '<option value="">No rooms available</option>';
-  } catch (e) { sel.innerHTML = '<option value="">Failed to load rooms</option>'; showToast('Failed to load rooms', 'error'); }
+  } catch (e) { sel.innerHTML = '<option value="">Failed to load rooms</option>'; if (e.message !== 'Session expired') showToast('Failed to load rooms', 'error'); }
 }
 
 function closeAllotModal() {
@@ -243,7 +243,7 @@ async function loadRooms() {
     </tr>`).join('');
     el('roomCount').textContent = list.length;
     el('availableCount').textContent = list.filter(r => r.status === 'AVAILABLE').length;
-  } catch (e) { showToast('Failed to load rooms', 'error'); }
+  } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load rooms', 'error'); }
 }
 
 async function saveRoom() {
@@ -272,7 +272,7 @@ async function loadFees() {
     el('totalFees').textContent = '₹' + list.reduce((s, f) => s + f.amount, 0);
     el('paidFees').textContent = list.filter(f => f.status === 'PAID').length;
     el('unpaidFees').textContent = list.filter(f => f.status === 'UNPAID').length;
-  } catch (e) { showToast('Failed to load fees', 'error'); }
+  } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load fees', 'error'); }
 }
 async function saveFee() {
   const data = { studentId: parseInt(el('f-student').value), studentName: el('f-student-name').value.trim(), amount: parseFloat(el('f-amount').value), dueDate: el('f-due').value, type: el('f-type').value, remark: el('f-remark').value.trim() };
@@ -297,7 +297,7 @@ async function loadVisitors() {
       <td>${v.inTime || '-'}</td>
       <td>${v.status === 'IN' ? `<span class="status-badge in-progress">IN</span>` : `<span class="status-badge active">OUT ${v.outTime||''}</span>`}</td>
     </tr>`).join('');
-  } catch (e) { showToast('Failed to load visitors', 'error'); }
+  } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load visitors', 'error'); }
 }
 async function saveVisitor() {
   const data = { visitorName: el('v-name').value.trim(), studentName: el('v-student').value.trim(), phone: el('v-phone').value.trim(), purpose: el('v-purpose').value.trim() };
@@ -321,7 +321,7 @@ async function loadComplaints() {
         <button class="btn btn-sm btn-success" onclick="resolveComplaint(${c.id})">Resolve</button>` : '<span style="color:var(--muted);font-size:.75rem;">' + (c.resolvedAt || '') + '</span>'}
       </td>
     </tr>`).join('');
-  } catch (e) { showToast('Failed to load complaints', 'error'); }
+  } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load complaints', 'error'); }
 }
 async function saveComplaint() {
   const data = { studentId: parseInt(el('c-student').value), studentName: el('c-student-name').value.trim(), title: el('c-title').value.trim(), description: el('c-desc').value.trim(), category: el('c-category').value, priority: el('c-priority').value };
@@ -353,7 +353,7 @@ async function loadAttendance() {
       <td>${a.outTime || '-'}</td>
       <td>${a.remark || '-'}</td>
     </tr>`).join('');
-  } catch (e) { showToast('Failed to load attendance', 'error'); }
+  } catch (e) { if (e.message !== 'Session expired') showToast('Failed to load attendance', 'error'); }
 }
 async function saveAttendance() {
   const data = { studentId: parseInt(el('a-student').value), studentName: el('a-student-name').value.trim(), status: el('a-status').value, date: new Date().toISOString().slice(0, 10), inTime: el('a-intime').value || null, remark: el('a-remark').value.trim() };
@@ -408,7 +408,10 @@ async function loadStudentDashboard() {
     await loadStudentFees(sid);
     await loadStudentComplaints(sid);
     await loadStudentAttendance(sid);
-  } catch (e) { showToast('Failed to load dashboard', 'error'); }
+  } catch (e) {
+    if (e.message === 'Session expired') return;
+    showToast('Failed to load dashboard', 'error');
+  }
 }
 
 async function loadStudentFees(sid) {
@@ -419,7 +422,7 @@ async function loadStudentFees(sid) {
     c.innerHTML = '<table style="font-size:.8rem"><thead><tr><th>Amount</th><th>Due</th><th>Status</th><th>Paid</th></tr></thead><tbody>' +
       fees.map(f => `<tr><td>₹${f.amount}</td><td>${f.dueDate}</td><td><span class="status-badge ${f.status.toLowerCase()}">${f.status}</span></td><td>${f.paidDate || '-'}</td></tr>`).join('') +
       '</tbody></table>';
-  } catch (e) { el('sd-fees-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
+  } catch (e) { if (e.message !== 'Session expired') el('sd-fees-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
 }
 
 async function loadStudentComplaints(sid) {
@@ -431,7 +434,7 @@ async function loadStudentComplaints(sid) {
       <strong>${cp.title}</strong> <span class="status-badge ${cp.status === 'RESOLVED' ? 'resolved' : cp.status === 'IN_PROGRESS' ? 'in-progress' : 'pending'}">${cp.status.replace('_',' ')}</span>
       <div style="color:var(--muted);font-size:.75rem;">${cp.description || ''}${cp.resolution ? '<br/>Resolution: '+cp.resolution : ''}</div>
     </div>`).join('');
-  } catch (e) { el('sd-complaints-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
+  } catch (e) { if (e.message !== 'Session expired') el('sd-complaints-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
 }
 
 async function sdSubmitComplaint() {
@@ -456,7 +459,7 @@ async function loadStudentAttendance(sid) {
     c.innerHTML = '<table style="font-size:.8rem"><thead><tr><th>Date</th><th>Status</th><th>In</th><th>Out</th></tr></thead><tbody>' +
       list.slice(-10).reverse().map(a => `<tr><td>${a.date}</td><td><span class="status-badge ${a.status.toLowerCase()}">${a.status}</span></td><td>${a.inTime || '-'}</td><td>${a.outTime || '-'}</td></tr>`).join('') +
       '</tbody></table>';
-  } catch (e) { el('sd-attendance-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
+  } catch (e) { if (e.message !== 'Session expired') el('sd-attendance-content').innerHTML = '<p style="color:var(--muted)">Failed to load</p>'; }
 }
 
 // ── INIT ──
