@@ -471,8 +471,5 @@ async function loadStudentAttendance(sid) {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
-  if (token && role === 'student') enterStudentDashboard();
-  else if (token) enterAdminDashboard();
+  showSection('section-home');
 });
