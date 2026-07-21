@@ -4,6 +4,7 @@ import com.hostel.model.Student;
 import com.hostel.repository.StudentRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -21,7 +22,10 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         TokenInfo info = authService.login(body.get("username"), body.get("password"));
         if (info == null) return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
-        return ResponseEntity.ok(Map.of("token", info.token, "username", info.username, "role", info.role, "studentId", info.studentId));
+        Map<String, Object> res = new HashMap<>();
+        res.put("token", info.token); res.put("username", info.username);
+        res.put("role", info.role); res.put("studentId", info.studentId);
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/register")

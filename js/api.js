@@ -436,11 +436,12 @@ async function loadStudentComplaints(sid) {
 
 async function sdSubmitComplaint() {
   const sid = localStorage.getItem('studentId');
+  const sname = el('sd-name').textContent;
   const title = el('sd-comp-title').value.trim();
   const desc = el('sd-comp-desc').value.trim();
   if (!title) { showToast('Title required', 'error'); return; }
   try {
-    await api('/complaints', { method: 'POST', body: JSON.stringify({ studentId: parseInt(sid), title, description: desc, category: 'OTHER', priority: 'MEDIUM' }) });
+    await api('/complaints', { method: 'POST', body: JSON.stringify({ studentId: parseInt(sid), studentName: sname, title, description: desc, category: 'OTHER', priority: 'MEDIUM' }) });
     showToast('Complaint submitted');
     el('sd-comp-title').value = ''; el('sd-comp-desc').value = '';
     await loadStudentComplaints(sid);
