@@ -1,4 +1,12 @@
 const API = 'https://hostel-management-api-0nr9.onrender.com/api';
+const ADMIN_EMAIL = 'pallolla.upendra@gmail.com';
+const EMAILJS_SERVICE_ID = 'service_w95ttgc';
+const EMAILJS_ADMIN_TEMPLATE_ID = 'template_6ys76fc';
+const EMAILJS_STUDENT_TEMPLATE_ID = 'template_td43r45';
+const EMAILJS_PUBLIC_KEY = '-lldD-ySq5Puq5qnM';
+
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
 let currentStudentId = null;
 let loginMode = 'admin';
 let cachedStudents = [];
@@ -419,7 +427,23 @@ async function updateComplaintStatus(id, status, resolution) {
 async function resolveComplaint(id) {
   const resolution = prompt('Enter resolution details:');
   if (!resolution) return;
-  await updateComplaintStatus(id, 'RESOLVED', resolution);
+  try {
+    await api('/complaints/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: 'RESOLVED', resolution }) });
+    showToast('Status updated');
+    loadComplaints();
+    try {
+      const c = await api('/complaints/' + id);
+      if (c?.studentEmail) {
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_STUDENT_TEMPLATE_ID, {
+          to_email: c.studentEmail,
+          student_name: c.studentName || 'Student',
+          title: c.title,
+          resolution,
+          resolved_at: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        }).catch(() => {});
+      }
+    } catch (_) {}
+  } catch (e) { showToast('Failed', 'error'); }
 }
 
 // ── ATTENDANCE (admin) ──
@@ -531,10 +555,21 @@ async function sdSubmitComplaint() {
   const desc = el('sd-comp-desc').value.trim();
   if (!title) { showToast('Title required', 'error'); return; }
   try {
-    await api('/complaints', { method: 'POST', body: JSON.stringify({ studentId: parseInt(sid), studentName: sname, title, description: desc, category: 'OTHER', priority: 'MEDIUM' }) });
+    let studentEmail = '';
+    try { const student = await api('/students/' + sid); studentEmail = student?.email || ''; } catch (_) {}
+    await api('/complaints', { method: 'POST', body: JSON.stringify({ studentId: parseInt(sid), studentName: sname, studentEmail, title, description: desc, category: 'OTHER', priority: 'MEDIUM' }) });
     showToast('Complaint submitted');
     el('sd-comp-title').value = ''; el('sd-comp-desc').value = '';
     await loadStudentComplaints(sid);
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ADMIN_TEMPLATE_ID, {
+      to_email: ADMIN_EMAIL,
+      student_name: sname,
+      student_email: studentEmail,
+      title,
+      description: desc || 'No description provided',
+      category: 'Other',
+      priority: 'Medium'
+    }).catch(() => {});
   } catch (e) { showToast(e.error || 'Failed', 'error'); }
 }
 
