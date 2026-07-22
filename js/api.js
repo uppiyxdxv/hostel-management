@@ -556,7 +556,8 @@ async function sdSubmitComplaint() {
   if (!title) { showToast('Title required', 'error'); return; }
   try {
     let studentEmail = '';
-    try { const student = await api('/students/' + sid); studentEmail = student?.email || ''; } catch (_) {}
+    let roomNumber = 'Not assigned';
+    try { const student = await api('/students/' + sid); studentEmail = student?.email || ''; roomNumber = student?.roomNumber || 'Not assigned'; } catch (_) {}
     await api('/complaints', { method: 'POST', body: JSON.stringify({ studentId: parseInt(sid), studentName: sname, studentEmail, title, description: desc, category: 'OTHER', priority: 'MEDIUM' }) });
     showToast('Complaint submitted');
     el('sd-comp-title').value = ''; el('sd-comp-desc').value = '';
@@ -565,6 +566,7 @@ async function sdSubmitComplaint() {
       to_email: ADMIN_EMAIL,
       student_name: sname,
       student_email: studentEmail,
+      room_number: roomNumber,
       title,
       description: desc || 'No description provided',
       category: 'Other',
